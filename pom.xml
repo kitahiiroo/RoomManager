@@ -5,8 +5,8 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.0</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <version>3.3.2</version> <!-- 改成这个或你想用的 3.x 版本 -->
+        <relativePath/>
     </parent>
     <groupId>org.example</groupId>
     <artifactId>RoomManager</artifactId>
@@ -73,6 +73,10 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+
+        <!-- 其它依赖略 -->
+
     </dependencies>
 
     <build>
