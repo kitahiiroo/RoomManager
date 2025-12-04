@@ -5,6 +5,8 @@ import org.example.roommanager.entity.Schedule;
 import org.example.roommanager.repository.ClassroomRepository;
 import org.example.roommanager.repository.ScheduleRepository;
 import org.example.roommanager.service.ClassroomService;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -25,7 +27,13 @@ public class ClassroomServiceImpl implements ClassroomService {
         this.scheduleRepository = scheduleRepository;
     }
 
+    /**
+     * 查询空闲教室，并使用 Redis 缓存结果。
+     * cacheNames = "freeClassrooms" 表示使用名为 freeClassrooms 的缓存空间。
+     * 默认 key 使用全部方法参数组合，能够区分不同的 date/startSection/endSection/minCapacity。
+     */
     @Override
+    @Cacheable(cacheNames = "freeClassrooms")
     public List<Classroom> findFreeClassrooms(LocalDate date,
                                               Integer startSection,
                                               Integer endSection,
@@ -38,8 +46,6 @@ public class ClassroomServiceImpl implements ClassroomService {
         }
 
         // 1. 查询这一天在这一节次范围内所有的占用记录
-        // 使用 ScheduleRepository 中的方法：
-        // findByDateAndStartSectionLessThanEqualAndEndSectionGreaterThanEqual(date, endSection, startSection)
         List<Schedule> occupiedList =
                 scheduleRepository.findByDateAndStartSectionLessThanEqualAndEndSectionGreaterThanEqual(
                         date,
@@ -68,7 +74,18 @@ public class ClassroomServiceImpl implements ClassroomService {
                 .filter(c -> !occupiedClassroomIds.contains(c.getId()))
                 .collect(Collectors.toList());
     }
+
+    /**
+     * 新增教室后，清理和教室相关的缓存，避免脏数据。
+     */
     @Override
+    @CacheEvict(cacheNames = {
+            "classroomList",
+            "availableClassrooms",
+            "classroomsByBuilding",
+            "classroomsByMinCapacity",
+            "freeClassrooms"
+    }, allEntries = true)
     public Classroom createClassroom(Classroom classroom) {
         // 初始状态设为 AVAILABLE（可用），也可以由前端传
         if (classroom.getStatus() == null) {
@@ -77,7 +94,17 @@ public class ClassroomServiceImpl implements ClassroomService {
         return classroomRepository.save(classroom);
     }
 
+    /**
+     * 更新教室同时清空相关缓存。
+     */
     @Override
+    @CacheEvict(cacheNames = {
+            "classroomList",
+            "availableClassrooms",
+            "classroomsByBuilding",
+            "classroomsByMinCapacity",
+            "freeClassrooms"
+    }, allEntries = true)
     public Classroom updateClassroom(Long id, Classroom classroom) {
         Optional<Classroom> optional = classroomRepository.findById(id);
         if (optional.isEmpty()) {
@@ -93,7 +120,17 @@ public class ClassroomServiceImpl implements ClassroomService {
         return classroomRepository.save(existing);
     }
 
+    /**
+     * 删除教室同时清空相关缓存。
+     */
     @Override
+    @CacheEvict(cacheNames = {
+            "classroomList",
+            "availableClassrooms",
+            "classroomsByBuilding",
+            "classroomsByMinCapacity",
+            "freeClassrooms"
+    }, allEntries = true)
     public void deleteClassroom(Long id) {
         classroomRepository.deleteById(id);
     }
@@ -104,22 +141,38 @@ public class ClassroomServiceImpl implements ClassroomService {
                 .orElseThrow(() -> new RuntimeException("Classroom not found, id=" + id));
     }
 
+    /**
+     * 全部教室列表缓存。
+     */
     @Override
+    @Cacheable(cacheNames = "classroomList")
     public List<Classroom> listAllClassrooms() {
         return classroomRepository.findAll();
     }
 
+    /**
+     * 可用教室列表缓存。
+     */
     @Override
+    @Cacheable(cacheNames = "availableClassrooms")
     public List<Classroom> listAvailableClassrooms() {
         return classroomRepository.findByStatus("AVAILABLE");
     }
 
+    /**
+     * 按楼栋缓存。
+     */
     @Override
+    @Cacheable(cacheNames = "classroomsByBuilding", key = "#building")
     public List<Classroom> listByBuilding(String building) {
         return classroomRepository.findByBuilding(building);
     }
 
+    /**
+     * 按最小容量缓存。
+     */
     @Override
+    @Cacheable(cacheNames = "classroomsByMinCapacity", key = "#minCapacity")
     public List<Classroom> listByMinCapacity(Integer minCapacity) {
         return classroomRepository.findByCapacityGreaterThanEqual(minCapacity);
     }

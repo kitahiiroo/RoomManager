@@ -32,7 +32,6 @@ public class Schedule {
     /**
      * 课程ID（如果不想拆表，也可以直接存课程名/教师名）
      */
-    @Column(nullable = false)
     private Long courseId;
 
     /**
@@ -58,4 +57,10 @@ public class Schedule {
      */
     @Column(nullable = false)
     private Integer endSection;
+
+    private String reason;
+
+    private String courseName;
+
+    private String teacherName;
 }

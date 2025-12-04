@@ -1,11 +1,11 @@
 -- 先删子表，再删父表
 
-DROP TABLE IF EXISTS schedule;
-DROP TABLE IF EXISTS course;
-DROP TABLE IF EXISTS sys_user;
-DROP TABLE IF EXISTS classroom;
+-- DROP TABLE IF EXISTS schedule;
+# DROP TABLE IF EXISTS course;
+# DROP TABLE IF EXISTS sys_user;
+# DROP TABLE IF EXISTS classroom;
 
-CREATE TABLE classroom
+CREATE TABLE if not exists classroom
 (
     id            BIGINT      NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     building      VARCHAR(50) NOT NULL COMMENT '楼栋名称，如A栋',
@@ -20,7 +20,7 @@ CREATE TABLE classroom
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='教室信息表';
 
-CREATE TABLE course
+CREATE TABLE if not exists course
 (
     id           BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     course_name  VARCHAR(100) NOT NULL COMMENT '课程名称',
@@ -32,11 +32,11 @@ CREATE TABLE course
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='课程信息表';
 
-CREATE TABLE schedule
+CREATE TABLE if not exists schedule
 (
     id            BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     classroom_id  BIGINT NOT NULL COMMENT '教室ID，关联classroom.id',
-    course_id     BIGINT NOT NULL COMMENT '课程ID，关联course.id',
+    course_id     BIGINT COMMENT '课程ID，关联course.id',
     date          DATE   NOT NULL COMMENT '上课日期',
     week_day      INT    NOT NULL COMMENT '周几：1-7',
     start_section INT    NOT NULL COMMENT '开始节次，例如1',
@@ -55,13 +55,29 @@ CREATE TABLE schedule
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='排课/教室占用表';
 
-CREATE TABLE sys_user
+CREATE TABLE if not exists user
 (
-    id       BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-    username VARCHAR(50)  NOT NULL COMMENT '登录用户名',
-    password VARCHAR(100) NOT NULL COMMENT '登录密码',
-    role     VARCHAR(20)  NOT NULL COMMENT '角色：ADMIN/TEACHER/STUDENT',
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_sys_user_username (username)
+    id          BIGINT PRIMARY KEY AUTO_INCREMENT,
+    username    VARCHAR(50)  NOT NULL UNIQUE,
+    password    VARCHAR(100) NOT NULL, -- 简化可以明文/MD5，答辩时说明安全可以改进
+    role        VARCHAR(20)  NOT NULL, -- 'ADMIN' 或 'USER'
+    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='系统用户表';
+
+CREATE TABLE IF NOT EXISTS room_application
+(
+    id            BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id       BIGINT      NOT NULL,
+    classroom_id  BIGINT      NOT NULL,
+    date          DATE        NOT NULL,
+    start_section INT         NOT NULL,
+    end_section   INT         NOT NULL,
+    reason        VARCHAR(255),
+    status        VARCHAR(20) NOT NULL,
+    create_time   DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time   DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_app_user FOREIGN KEY (user_id) REFERENCES user (id),
+    CONSTRAINT fk_app_classroom FOREIGN KEY (classroom_id) REFERENCES classroom (id)
+)ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='教室申请表';

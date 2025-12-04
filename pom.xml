@@ -30,6 +30,11 @@
         <java.version>17</java.version>
     </properties>
     <dependencies>
+        <!-- 可选：用于 JSON 序列化（如果你要存对象，可以考虑） -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
         <!-- Web: Spring MVC + 内置 Tomcat -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

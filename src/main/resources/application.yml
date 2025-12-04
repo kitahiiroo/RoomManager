@@ -4,8 +4,11 @@
 server:
   # 应用端口，服务器上访问 http://ip:8080
   port: 8081
-
 spring:
+  redis:
+    host: localhost
+    port: 6379
+    # password: yourpassword  # 如果配置了密码，再打开这一行
   sql:
     init:
       mode: always
@@ -33,7 +36,7 @@ spring:
     # validate    只校验表结构，不修改（生产更安全）
     # none        什么都不做
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     # 打印执行的 SQL，调试时比较方便
     show-sql: true
     properties:

@@ -1,5 +1,6 @@
 package org.example.roommanager.controller;
 
+import org.example.roommanager.auth.LoginUserContext;
 import org.example.roommanager.entity.Course;
 import org.example.roommanager.service.CourseService;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ public class CourseController {
      */
     @PostMapping
     public ResponseEntity<Course> create(@RequestBody Course course) {
+        var admin = LoginUserContext.requireAdmin();
         Course saved = courseService.createCourse(course);
         return ResponseEntity.ok(saved);
     }
@@ -37,6 +39,7 @@ public class CourseController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<Course> update(@PathVariable Long id, @RequestBody Course course) {
+        var admin = LoginUserContext.requireAdmin();
         Course updated = courseService.updateCourse(id, course);
         return ResponseEntity.ok(updated);
     }
@@ -47,6 +50,7 @@ public class CourseController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
+        var admin = LoginUserContext.requireAdmin();
         courseService.deleteCourse(id);
         return ResponseEntity.noContent().build();
     }
